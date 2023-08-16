@@ -32,19 +32,16 @@ if [ -f $existingOTAjson ]; then
 	maintainer=`grep -n "\"maintainer\"" $existingOTAjson | cut -d ":" -f 3 | sed 's/"//g' | sed 's/,//g' | xargs`
 	oem=`grep -n "\"oem\"" $existingOTAjson | cut -d ":" -f 3 | sed 's/"//g' | sed 's/,//g' | xargs`
 	device=`grep -n "\"device\"" $existingOTAjson | cut -d ":" -f 3 | sed 's/"//g' | sed 's/,//g' | xargs`
-	filename=$3
-	version=`echo "$3" | cut -d'-' -f5`
-	v_max=`echo "$version" | cut -d'.' -f1 | cut -d'v' -f2`
-	v_min=`echo "$version" | cut -d'.' -f2`
-	version=`echo $v_max.$v_min`
+	version=$(awk '{ sub(/v/, ""); sub(/\.zip/, ""); print }' <<< `echo "$3" | cut -d'-' -f6`)
 	buildprop=$2/system/build.prop
 	linenr=`grep -n "ro.system.build.date.utc" $buildprop | cut -d':' -f1`
 	timestamp=`sed -n $linenr'p' < $buildprop | cut -d'=' -f2`
 	md5=`md5sum "$2/$3" | cut -d' ' -f1`
 	sha256=`sha256sum "$2/$3" | cut -d' ' -f1`
 	size=`stat -c "%s" "$2/$3"`
-	buildtype=`grep -n "\"buildtype\"" $existingOTAjson | cut -d ":" -f 3 | sed 's/"//g' | sed 's/,//g' | xargs`
-	forum=`grep -n "\"forum\"" $existingOTAjson | cut -d ":" -f 4 | sed 's/"//g' | sed 's/,//g' | xargs`
+	linenr=`grep -m 1 -n "ro.crdroid.build.package" $buildprop | cut -d':' -f1`
+	buildtype=`sed -n $linenr'p' < $buildprop | cut -d'=' -f2`
+	forum=`grep -m 1 -n "\"forum\"" $existingOTAjson | cut -d ":" -f 4 | sed 's/"//g' | sed 's/,//g' | xargs`
 	if [ ! -z "$forum" ]; then
 		forum="https:"$forum
 	fi
@@ -95,8 +92,8 @@ if [ -f $existingOTAjson ]; then
 			"maintainer": "'$maintainer'",
 			"oem": "'$oem'",
 			"device": "'$device'",
-			"filename": "'$filename'",
-			"download": "https://sourceforge.net/projects/crdroid/files/'$1'/'$v_max'.x/'$3'/download",
+			"filename": "'$3'",
+			"download": "https://sourceforge.net/projects/bernies-builds/files/'$1'/'$6'/'$3'/download",
 			"timestamp": '$timestamp',
 			"md5": "'$md5'",
 			"sha256": "'$sha256'",
@@ -118,11 +115,7 @@ if [ -f $existingOTAjson ]; then
 	]
 }' >> $output
 else
-	filename=$3
-	version=`echo "$3" | cut -d'-' -f5`
-	v_max=`echo "$version" | cut -d'.' -f1 | cut -d'v' -f2`
-	v_min=`echo "$version" | cut -d'.' -f2`
-	version=`echo $v_max.$v_min`
+	version=$(awk '{ sub(/v/, ""); sub(/\.zip/, ""); print }' <<< `echo "$3" | cut -d'-' -f6`)
 	buildprop=$2/system/build.prop
 	linenr=`grep -n "ro.system.build.date.utc" $buildprop | cut -d':' -f1`
 	timestamp=`sed -n $linenr'p' < $buildprop | cut -d'=' -f2`
@@ -136,8 +129,8 @@ else
 			"maintainer": "''",
 			"oem": "''",
 			"device": "''",
-			"filename": "'$filename'",
-			"download": "https://sourceforge.net/projects/crdroid/files/'$1'/'$v_max'.x/'$3'/download",
+			"filename": "'$3'",
+			"download": "https://sourceforge.net/projects/bernies-builds/files/'$1'/'$6'/'$3'/download",
 			"timestamp": '$timestamp',
 			"md5": "'$md5'",
 			"sha256": "'$sha256'",
